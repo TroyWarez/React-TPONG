@@ -2,10 +2,10 @@ import logo from './ball.svg';
 import './App.css';
 import "bootstrap/dist/css/bootstrap.min.css"
 
+let PlayerScore, CompScore;
+
 function App() {
-  return (
-    <div className="my-component" />
-  );
+
 }
 
 export default App;
