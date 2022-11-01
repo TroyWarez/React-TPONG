@@ -3,11 +3,12 @@ import './App.css';
 import "bootstrap/dist/css/bootstrap.min.css"
 
 let PlayerScore, CompScore;
-let Canvas;
+const Canvas = document.getElementById('gameBoard');
+const Context2d = Canvas.getContext("2d");
+
 function App() {
-  Canvas = document.getElementById('gameBoard');
   const { Width, Height } = Canvas.getBoundingClientRect();
-  InitGame(Height, Width);
+  return InitGame(Height, Width);
 }
 
 function InitGame(Height, Width)
