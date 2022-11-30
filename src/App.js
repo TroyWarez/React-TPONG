@@ -27,7 +27,7 @@ let CPUPaddle = { 'x' : 0, "y" : 0 }
 let PlayerScore = 1;
 let CPUScore = 1;
 
-let gameFlags = { "StartGame" : 0, }
+let gameFlags = { "StartGame" : 0, "CursorLocked" : 0 }
 
 const MovSpeed = 2.75;
 window.onload = function() {
@@ -36,7 +36,12 @@ window.onload = function() {
   }, 1000 / FPSTarget)
 }
 function App() {
-  
+  if (Debug)
+  {
+    gameFlags.StartGame = true;
+    BackgroundColor = Green;
+    SpriteColor = White;
+  }
 }
 function Draw()
 {
@@ -74,14 +79,10 @@ function Draw()
   //Player Paddle
   if(gameFlags.StartGame === true)
   {
-    ctx.fillRect(100, PlayerPaddle.y, 20, 100);
-    ctx.arc(100, PlayerPaddle.y, 20, 0, Math.PI * 2);
+    ctx.beginPath();
+    ctx.roundRect(100, PlayerPaddle.y, 10, 100, 20);
     ctx.fill();
     ctx.stroke();
-    ctx.arc(100, PlayerPaddle.y + 100, 20, 0, Math.PI * 2);
-    ctx.fillStyle = SpriteColor;
-    ctx.fill();
-    ctx.strokeRect(100, PlayerPaddle.y, 60, 100);
   }
   ctx.stroke();
 }
@@ -122,17 +123,36 @@ document.addEventListener('keydown', function(event) {
       return
   }
 }, true);
-document.addEventListener('mousemove', function(event) {
+function MouseHandler(event) {
+  let movementY = event.movementY ||
+  event.mozMovementY      ||
+  event.webkitMovementY   ||
+      0;
 
-  if(Debug === 1)
-  {
-    console.log(PlayerPaddle.y);
-  }
+  let animation = requestAnimationFrame(MouseHandler);
 
-  if(gameFlags.StartGame === true && PlayerPaddle.y < window.innerHeight)
+  if(gameFlags.StartGame === true)
   {
-    PlayerPaddle.y = event.clientY;
+    if ((PlayerPaddle.y + movementY) >= 0 && (PlayerPaddle.y + movementY) <= (window.innerHeight - 100))
+    {
+      PlayerPaddle.y += movementY;
+    }
+    else if (PlayerPaddle.y < 0 || PlayerPaddle.y > window.innerHeight)// Paddle out of bounds
+    {
+      PlayerPaddle.y = (window.innerHeight / 2);
+    }
   }
-  
+}
+
+canvas.onclick = function() {
+  canvas.requestPointerLock();
+}
+document.addEventListener('pointerlockchange', function(event) {
+  if(document.pointerLockElement === canvas) {
+    document.addEventListener("mousemove", MouseHandler, false);
+  }
+  else{
+    document.removeEventListener("mousemove", MouseHandler, false);
+  }
 }, true);
 export default App;
