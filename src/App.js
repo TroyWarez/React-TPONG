@@ -29,7 +29,7 @@ let CPUScore = 1;
 
 let gameFlags = { "StartGame" : 0, "CursorLocked" : 0 }
 
-const MovSpeed = 2.75;
+const MovSpeed = 3.00;
 window.onload = function() {
   gameLoop = setInterval(() => {
     Draw();
@@ -41,12 +41,20 @@ function App() {
     gameFlags.StartGame = true;
     BackgroundColor = Green;
     SpriteColor = White;
+    Ball.x = (window.innerWidth / 2);
+    Ball.y = Math.floor(Math.random() * window.innerHeight);
   }
 }
 function Draw()
 {
   ctx.canvas.width  = window.innerWidth;
   ctx.canvas.height = window.innerHeight;
+
+  if((Ball.y + MovSpeed) <= window.innerHeight)
+  {
+    Ball.y += MovSpeed;
+    Ball.x -= MovSpeed;
+  }
 
   // Background
   ctx.fillStyle = BackgroundColor;
@@ -73,17 +81,23 @@ function Draw()
 
   if(Debug === 1)
   {
-    console.log(PlayerPaddle.y);
+    console.log(Ball.y);
   }
 
-  //Player Paddle
+  //Paddles
   if(gameFlags.StartGame === true)
   {
-    ctx.beginPath();
     ctx.roundRect(100, PlayerPaddle.y, 10, 100, 20);
     ctx.fill();
     ctx.stroke();
+
+    ctx.roundRect(window.innerWidth - 100, CPUPaddle.y, 10, 100, 20);
+    ctx.fill();
+    ctx.stroke();
   }
+  ctx.beginPath();
+  ctx.arc(Ball.x, Ball.y, 20, 0, 2 * Math.PI);
+  ctx.fill();
   ctx.stroke();
 }
 
