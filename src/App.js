@@ -60,7 +60,7 @@ function Draw()
   ctx.fillText(CPUScore.toString(), ((window.innerWidth + 500) / 2), 100);
 
   //Net
-  ctx.fillStyle = BackgroundColor;
+  ctx.fillStyle = SpriteColor;
   for (let y = 0; y < window.innerHeight; y += 80)
   {
     ctx.fillRect((window.innerWidth / 2), y, 20, 40);
@@ -70,7 +70,19 @@ function Draw()
   {
     console.log(PlayerPaddle.y);
   }
-  ctx.fillRect(20, PlayerPaddle.y, 20, 80);
+
+  //Player Paddle
+  if(gameFlags.StartGame === true)
+  {
+    ctx.fillRect(100, PlayerPaddle.y, 20, 100);
+    ctx.arc(100, PlayerPaddle.y, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.arc(100, PlayerPaddle.y + 100, 20, 0, Math.PI * 2);
+    ctx.fillStyle = SpriteColor;
+    ctx.fill();
+    ctx.strokeRect(100, PlayerPaddle.y, 60, 100);
+  }
   ctx.stroke();
 }
 
@@ -103,10 +115,24 @@ document.addEventListener('keydown', function(event) {
         break;
     case 'Enter':
       gameFlags.StartGame = true;
+      PlayerScore = 0;
+      CPUScore = 0;
       break;
     default:
       return
   }
 }, true);
-document.addEventListener('mousemove', throttle(handleMousemove, 500));
+document.addEventListener('mousemove', function(event) {
+
+  if(Debug === 1)
+  {
+    console.log(PlayerPaddle.y);
+  }
+
+  if(gameFlags.StartGame === true && PlayerPaddle.y < window.innerHeight)
+  {
+    PlayerPaddle.y = event.clientY;
+  }
+  
+}, true);
 export default App;
