@@ -1,31 +1,5 @@
-.background-black {
-  background-color: rgb(0, 0, 0);
-}
+.wrapper {
 
-.background-white {
-  background-color: rgb(255, 255, 255);
-}
-.background-red {
-  background-color: rgb(128, 0, 0);
-}
-.background-green {
-  background-color: rgb(0, 128, 0);
-}
-.background-blue {
-  background-color: rgb(0, 0, 128);
-}
-.background-purple {
-  background-color: rgb(131, 4, 131)
-}
-.background-DimGray {
-  background-color: rgb(104, 104, 104);
-}
-div {
-  text-align: center;
-}
-.center {
-  margin: auto;
-  width: 50%;
-  border: 3px solid green;
-  padding: 10px;
+  padding: 20px;
+
 }
