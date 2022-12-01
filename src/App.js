@@ -1,5 +1,6 @@
 import './App.css';
 import "bootstrap/dist/css/bootstrap.min.css"
+import { Alert } from 'bootstrap';
 const canvas = document.getElementById("gameBoard");
 const ctx = canvas.getContext("2d");
 let FPSTarget = 60;
@@ -27,9 +28,16 @@ let CPUPaddle = { 'x' : 0, "y" : 0 }
 let PlayerScore = 1;
 let CPUScore = 1;
 
-let gameFlags = { "StartGame" : 0, "CursorLocked" : 0 }
+let gameFlags = { "StartGame" : 0, "DrawBall" : 0 }
 
-const MovSpeed = 3.00;
+const MovSpeed = -6.00;
+const BallRad = 20;
+
+let BallSpeedY = MovSpeed;
+let BallSpeedX = MovSpeed;
+
+let BallSpawnDelay = 0;
+
 window.onload = function() {
   gameLoop = setInterval(() => {
     Draw();
@@ -39,6 +47,7 @@ function App() {
   if (Debug)
   {
     gameFlags.StartGame = true;
+    gameFlags.DrawBall = true;
     BackgroundColor = Green;
     SpriteColor = White;
     Ball.x = (window.innerWidth / 2);
@@ -50,11 +59,71 @@ function Draw()
   ctx.canvas.width  = window.innerWidth;
   ctx.canvas.height = window.innerHeight;
 
-  if((Ball.y + MovSpeed) <= window.innerHeight)
-  {
-    Ball.y += MovSpeed;
-    Ball.x -= MovSpeed;
+  //Game Logic
+  if( BallSpawnDelay < Date.now()  && BallSpawnDelay != 0){
+    Ball.x = (window.innerWidth / 2);
+    Ball.y = Math.floor(Math.random() * window.innerHeight);
+    if(Math.floor(Math.random() * 2) != 2)
+    {
+      BallSpeedY = BallSpeedY * 1;
+      BallSpeedX = BallSpeedX * -1;
+    }
+    else {
+      BallSpeedY = BallSpeedY * -1;
+      BallSpeedX = BallSpeedX * -1;
+    }
+    gameFlags.DrawBall = true;
+    BallSpawnDelay = 0;
   }
+  if (gameFlags.DrawBall == true){
+    if ((Ball.x + 80) < 0)//CPU Scored
+    {
+      CPUScore++;
+      BallSpawnDelay = Date.now() + 4000;
+      gameFlags.DrawBall = false;
+    }
+    else if ((Ball.x - 80) > (window.innerWidth))//Player Scored
+    {
+      PlayerScore++;
+      BallSpawnDelay = Date.now() + 4000;
+      gameFlags.DrawBall = false;
+    }
+}
+
+  if (Ball.x <= 120 && Ball.x >= 90 && Ball.y < (PlayerPaddle.y + 100) && Ball.y > PlayerPaddle.y)
+  {
+    if(BallSpeedY < 0)
+    {
+      BallSpeedY = BallSpeedY * -1;
+      BallSpeedX = BallSpeedX * 1;
+    }
+    else if(BallSpeedX < 0)
+    {
+      BallSpeedY = BallSpeedY * 1;
+      BallSpeedX = BallSpeedX * -1;
+    }
+    else
+    {
+      BallSpeedY = BallSpeedY * 1;
+      BallSpeedX = BallSpeedX * 1;
+    }
+  }
+
+
+  if ((Ball.y - 20) <= 0)
+  {
+    BallSpeedY = BallSpeedY * -1;
+    BallSpeedX = BallSpeedX * 1;
+  }
+  else if ((Ball.y + 20) >= window.innerHeight)
+  {
+    BallSpeedY = BallSpeedY * -1;
+    BallSpeedX = BallSpeedX * 1;
+  }
+
+
+  Ball.y += BallSpeedY;
+  Ball.x += BallSpeedX;
 
   // Background
   ctx.fillStyle = BackgroundColor;
@@ -78,12 +147,6 @@ function Draw()
   {
     ctx.fillRect((window.innerWidth / 2), y, 20, 40);
   }
-
-  if(Debug === 1)
-  {
-    console.log(Ball.y);
-  }
-
   //Paddles
   if(gameFlags.StartGame === true)
   {
@@ -91,14 +154,25 @@ function Draw()
     ctx.fill();
     ctx.stroke();
 
+    if (CPUPaddle.y >= 0 && CPUPaddle.y <= (window.innerHeight - 100) && Ball.x >= (window.width / 2))
+    {
+      CPUPaddle.y += MovSpeed;
+    }
+    else if (CPUPaddle.y < 0 || CPUPaddle.y > window.innerHeight)// Paddle out of bounds
+    {
+      CPUPaddle.y = (window.innerHeight / 2);
+    }
     ctx.roundRect(window.innerWidth - 100, CPUPaddle.y, 10, 100, 20);
     ctx.fill();
     ctx.stroke();
+
+    if(gameFlags.DrawBall == true){
+    ctx.beginPath();
+    ctx.arc(Ball.x, Ball.y, BallRad, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+    }
   }
-  ctx.beginPath();
-  ctx.arc(Ball.x, Ball.y, 20, 0, 2 * Math.PI);
-  ctx.fill();
-  ctx.stroke();
 }
 
 document.addEventListener('keydown', function(event) {
