@@ -3,7 +3,6 @@ import "bootstrap/dist/css/bootstrap.min.css"
 import { Alert } from 'bootstrap';
 const canvas = document.getElementById("gameBoard");
 const ctx = canvas.getContext("2d");
-ctx.font = `40px Verdana`;
 let FPSTarget = 60;
 let gameLoop;
 const Debug = 1;
@@ -59,20 +58,23 @@ function App() {
     SpriteColor = White;
     PlayerScore = 0;
     CPUScore = 0;
-    Ball.x = (window.innerWidth / 2);
-    Ball.y = Math.floor(Math.random() * (window.innerHeight - 50));
+    Ball.x = (window.screen.width / 2);
+    Ball.y = Math.floor(Math.random() * (window.screen.height - 50));
   }
 }
 function Draw()
 {
   ctx.canvas.width  = window.screen.width;
   ctx.canvas.height = window.screen.height;
+  if (Debug)
+  {
   console.log("Width:" + ctx.canvas.width);
   console.log("Height:" + ctx.canvas.height);
+  }
   //Game Logic
   if( BallSpawnDelay < Date.now()  && BallSpawnDelay !== 0){
-    Ball.x = (window.innerWidth / 2);
-    Ball.y = Math.floor(Math.random() * window.innerHeight);
+    Ball.x = (window.screen.width / 2);
+    Ball.y = Math.floor(Math.random() * window.screen.height);
     gameFlags.DrawBall = true;
     BallSpawnDelay = 0;
   }
@@ -83,7 +85,7 @@ function Draw()
       BallSpawnDelay = Date.now() + 4000;
       gameFlags.DrawBall = false;
     }
-    else if ((Ball.x - 80) > (window.innerWidth))//Player Scored
+    else if ((Ball.x - 80) > (window.screen.width))//Player Scored
     {
       PlayerScore++;
       BallSpawnDelay = Date.now() + 4000;
@@ -97,23 +99,23 @@ function Draw()
 
   // Background
   ctx.fillStyle = BackgroundColor;
-  ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+  ctx.fillRect(0, 0, window.screen.width, window.screen.height);
   ctx.stroke();
 
-
+  ctx.font = `40px Verdana`;
   //Player Score
   ctx.fillStyle = SpriteColor;
-  ctx.fillText(PlayerScore.toString(), ((window.innerWidth - 500) / 2), 1000);
+  ctx.fillText(PlayerScore.toString(), ((window.screen.width - 500) / 2), 100);
 
   //CPU Score
   ctx.fillStyle = SpriteColor;
-  ctx.fillText(CPUScore.toString(), ((window.innerWidth + 500) / 2), 1000);
+  ctx.fillText(CPUScore.toString(), ((window.screen.width + 500) / 2), 100);
 
   //Net
   ctx.fillStyle = SpriteColor;
-  for (let y = 0; y < window.innerHeight; y += 80)
+  for (let y = 0; y < window.screen.height; y += 80)
   {
-    ctx.fillRect((window.innerWidth / 2), y, 20, 40);
+    ctx.fillRect((window.screen.width / 2), y, 20, 40);
   }
   //Paddles
   if(gameFlags.StartGame === true)
@@ -122,15 +124,15 @@ function Draw()
     ctx.fill();
     ctx.stroke();
 
-    if (CPUPaddle.y >= 0 && CPUPaddle.y <= window.innerHeight && Ball.x >= (window.innerWidth / 2) && gameFlags.DrawBall === true)
+    if (CPUPaddle.y >= 0 && CPUPaddle.y <= window.screen.height && Ball.x >= (window.screen.width / 2) && gameFlags.DrawBall === true)
     {
       CPUPaddle.y = (Ball.y - 20.0);
     }
-    else if (CPUPaddle.y < 0 || CPUPaddle.y > window.innerHeight)// Paddle out of bounds
+    else if (CPUPaddle.y < 0 || CPUPaddle.y > window.screen.height)// Paddle out of bounds
     {
-      CPUPaddle.y = (window.innerHeight / 2);
+      CPUPaddle.y = (window.screen.height / 2);
     }
-    ctx.roundRect(window.innerWidth - 100, CPUPaddle.y, 10, 100, 20);
+    ctx.roundRect(window.screen.width - 100, CPUPaddle.y, 10, 100, 20);
     ctx.fill();
     ctx.stroke();
 
@@ -188,13 +190,13 @@ function MouseHandler(event) {
 
   if(gameFlags.StartGame === true)
   {
-    if ((PlayerPaddle.y + movementY) >= 0 && (PlayerPaddle.y + movementY) <= (window.innerHeight - 100))
+    if ((PlayerPaddle.y + movementY) >= 0 && (PlayerPaddle.y + movementY) <= (window.screen.height - 100))
     {
       PlayerPaddle.y += movementY;
     }
-    else if (PlayerPaddle.y < 0 || PlayerPaddle.y > window.innerHeight)// Paddle out of bounds
+    else if (PlayerPaddle.y < 0 || PlayerPaddle.y > window.screen.height)// Paddle out of bounds
     {
-      PlayerPaddle.y = (window.innerHeight / 2);
+      PlayerPaddle.y = (window.screen.height / 2);
     }
   }
 }
