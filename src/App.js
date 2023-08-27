@@ -20,7 +20,8 @@ const White = '#FFFFFF';
 
 let BackgroundColor = '#00000';
 let SpriteColor = '#767676';
-
+let gameBoardWidth = 800;
+let gameBoardHeight = 600;
 let Ball = { 'x' : 0, "y" : 0 }
 let PlayerPaddle = { 'x' : 0, "y" : 0 }
 let CPUPaddle = { 'x' : 0, "y" : 0 }
@@ -41,6 +42,8 @@ let BallSpeedX = MovSpeed;
 let BallSpawnDelay = 0;
 
 window.onload = function() {
+ // Element.requestFullScreen();
+   
   gameLoop = setInterval(() => {
     Draw();
   }, 1000 / FPSTarget)
@@ -58,14 +61,14 @@ function App() {
     SpriteColor = White;
     PlayerScore = 0;
     CPUScore = 0;
-    Ball.x = (window.screen.width / 2);
-    Ball.y = Math.floor(Math.random() * (window.screen.height - 50));
+    Ball.x = (gameBoardWidth / 2);
+    Ball.y = Math.floor(Math.random() * (gameBoardHeight - 50));
   }
 }
 function Draw()
 {
-  ctx.canvas.width  = window.screen.width;
-  ctx.canvas.height = window.screen.height;
+  ctx.canvas.width  = gameBoardWidth;
+  ctx.canvas.height = gameBoardHeight;
   if (Debug)
   {
   console.log("Width:" + ctx.canvas.width);
@@ -73,8 +76,8 @@ function Draw()
   }
   //Game Logic
   if( BallSpawnDelay < Date.now()  && BallSpawnDelay !== 0){
-    Ball.x = (window.screen.width / 2);
-    Ball.y = Math.floor(Math.random() * window.screen.height);
+    Ball.x = (gameBoardWidth / 2);
+    Ball.y = Math.floor(Math.random() * gameBoardHeight);
     gameFlags.DrawBall = true;
     BallSpawnDelay = 0;
   }
@@ -85,7 +88,7 @@ function Draw()
       BallSpawnDelay = Date.now() + 4000;
       gameFlags.DrawBall = false;
     }
-    else if ((Ball.x - 80) > (window.screen.width))//Player Scored
+    else if ((Ball.x - 80) > (gameBoardWidth))//Player Scored
     {
       PlayerScore++;
       BallSpawnDelay = Date.now() + 4000;
@@ -99,23 +102,23 @@ function Draw()
 
   // Background
   ctx.fillStyle = BackgroundColor;
-  ctx.fillRect(0, 0, window.screen.width, window.screen.height);
+  ctx.fillRect(0, 0, gameBoardWidth, gameBoardHeight);
   ctx.stroke();
 
   ctx.font = `40px Verdana`;
   //Player Score
   ctx.fillStyle = SpriteColor;
-  ctx.fillText(PlayerScore.toString(), ((window.screen.width - 500) / 2), 100);
+  ctx.fillText(PlayerScore.toString(), ((gameBoardWidth - 500) / 2), 100);
 
   //CPU Score
   ctx.fillStyle = SpriteColor;
-  ctx.fillText(CPUScore.toString(), ((window.screen.width + 500) / 2), 100);
+  ctx.fillText(CPUScore.toString(), ((gameBoardWidth + 500) / 2), 100);
 
   //Net
   ctx.fillStyle = SpriteColor;
-  for (let y = 0; y < window.screen.height; y += 80)
+  for (let y = 0; y < gameBoardHeight; y += 80)
   {
-    ctx.fillRect((window.screen.width / 2), y, 20, 40);
+    ctx.fillRect((gameBoardWidth / 2), y, 20, 40);
   }
   //Paddles
   if(gameFlags.StartGame === true)
@@ -124,15 +127,15 @@ function Draw()
     ctx.fill();
     ctx.stroke();
 
-    if (CPUPaddle.y >= 0 && CPUPaddle.y <= window.screen.height && Ball.x >= (window.screen.width / 2) && gameFlags.DrawBall === true)
+    if (CPUPaddle.y >= 0 && CPUPaddle.y <= gameBoardHeight && Ball.x >= (gameBoardWidth / 2) && gameFlags.DrawBall === true)
     {
       CPUPaddle.y = (Ball.y - 20.0);
     }
-    else if (CPUPaddle.y < 0 || CPUPaddle.y > window.screen.height)// Paddle out of bounds
+    else if (CPUPaddle.y < 0 || CPUPaddle.y > gameBoardHeight)// Paddle out of bounds
     {
-      CPUPaddle.y = (window.screen.height / 2);
+      CPUPaddle.y = (gameBoardHeight / 2);
     }
-    ctx.roundRect(window.screen.width - 100, CPUPaddle.y, 10, 100, 20);
+    ctx.roundRect(gameBoardWidth - 100, CPUPaddle.y, 10, 100, 20);
     ctx.fill();
     ctx.stroke();
 
@@ -144,6 +147,11 @@ function Draw()
     }
   }
 }
+
+//window.addEventListener('resize', function(event){
+//  gameBoardWidth = window.innerHeight;
+//  gameBoardHeight = window.innerWidth;
+//});
 document.addEventListener('keydown', function(event) {
 
   if(Debug === 1)
@@ -152,30 +160,54 @@ document.addEventListener('keydown', function(event) {
   }
   switch(event.key) {
     case '1': //Red
+    {
         BackgroundColor = Red;
         SpriteColor = White;
         break;
+    }
     case '2': //Green
+    {
         BackgroundColor = Green;
         SpriteColor = White;
         break;
+    }
     case '3': // Blue
+    {
         BackgroundColor = Blue;
         SpriteColor = White;
-        break;  
+        break;
+    } 
     case '4': // Purple
+    {
         BackgroundColor = Purple;
         SpriteColor = White;
         break;
+    }
     case '5': // Black
+    {
         BackgroundColor = Black;
         SpriteColor = DimGray;
         break;
+    }
     case 'Enter':
+    {
       gameFlags.StartGame = true;
       PlayerScore = 0;
       CPUScore = 0;
       break;
+    }
+    case 'F11':
+      {
+        if (!document.fullscreenElement) {
+          canvas.requestFullscreen().catch((err) => {
+            alert(
+              `Error attempting to enable fullscreen mode: ${err.message} (${err.name})`,
+            );
+          });
+        } else {
+          document.exitFullscreen();
+        }
+      }
     default:
       return
   }
@@ -190,13 +222,13 @@ function MouseHandler(event) {
 
   if(gameFlags.StartGame === true)
   {
-    if ((PlayerPaddle.y + movementY) >= 0 && (PlayerPaddle.y + movementY) <= (window.screen.height - 100))
+    if ((PlayerPaddle.y + movementY) >= 0 && (PlayerPaddle.y + movementY) <= (gameBoardHeight - 100))
     {
       PlayerPaddle.y += movementY;
     }
-    else if (PlayerPaddle.y < 0 || PlayerPaddle.y > window.screen.height)// Paddle out of bounds
+    else if (PlayerPaddle.y < 0 || PlayerPaddle.y > gameBoardHeight)// Paddle out of bounds
     {
-      PlayerPaddle.y = (window.screen.height / 2);
+      PlayerPaddle.y = (gameBoardHeight / 2);
     }
   }
 }
