@@ -25,6 +25,7 @@ const White = '#FFFFFF';
 
 const BallRad = 20;
 const BallMovSpeed = 0.1;
+const CPUMovSpeed = 0.5;
 
 let BackgroundColor = '#00000';
 let SpriteColor = '#767676';
@@ -145,7 +146,14 @@ Ball.x += Ball.velocityX * deltaTime;
 
     if (gameFlags.DrawBall === true)
     {
-      CPUPaddle.y = (Ball.y - 20.0);
+      if(CPUPaddle.y <= (Ball.y - (PaddleX / 2)))
+      {
+        CPUPaddle.y += CPUMovSpeed;
+      }
+      else
+      {
+        CPUPaddle.y -= CPUMovSpeed;
+      }
     }
     ctx.roundRect(gameBoardWidth - PaddleX, CPUPaddle.y, 10, PaddleX, 20);
     ctx.fill();
@@ -178,6 +186,8 @@ document.addEventListener('keydown', function(event) {
   {
     console.log(event.key);
   }
+  if(event.repeat === false)
+  {
   switch(event.key) {
     case '1': //Red
     {
@@ -254,6 +264,7 @@ document.addEventListener('keydown', function(event) {
     default:
       return
   }
+}
   lastKey = event.key;
 }, true);
 function MouseHandler(event) {
