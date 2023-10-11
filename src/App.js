@@ -40,7 +40,7 @@ canvas.style.display = canvasStyleDisplay;
 canvas.style.width = canvasStyleWidth;
 
 let Ball = { 'x' : 0, 'y' : 0, 'radius' : BallRad, 'velocityY' : BallMovSpeed, 'velocityX' : BallMovSpeed }
-let PlayerPaddle = { 'x' : PaddleX, 'y' : 0 }
+let PlayerPaddle = { 'x' : PaddleX, 'y' : ((DefaultHeight / 2) - PaddleX) }
 let CPUPaddle = { 'x' : 0, 'y' : 0 }
 
 let PlayerScore = 1;
@@ -83,7 +83,7 @@ function Draw(timeStamp)
   //Game Logic
   if( BallSpawnDelay < Date.now()  && BallSpawnDelay !== 0){
     Ball.x = (gameBoardWidth / 2);
-    Ball.y = Math.floor(Math.random() * gameBoardHeight);
+    Ball.y = gameBoardHeight;
     gameFlags.DrawBall = true;
     BallSpawnDelay = 0;
   }
@@ -146,14 +146,22 @@ Ball.x += Ball.velocityX * deltaTime;
 
     if (gameFlags.DrawBall === true)
     {
-      if(CPUPaddle.y <= (Ball.y - (PaddleX / 2)))
+      if ((CPUPaddle.y + CPUMovSpeed) <= (Ball.y - (PaddleX / 2)) && ((CPUPaddle.y + PaddleX) + CPUMovSpeed) <= gameBoardHeight )
       {
         CPUPaddle.y += CPUMovSpeed;
       }
-      else
+      else if ((CPUPaddle.y - CPUMovSpeed) >= 0)
       {
         CPUPaddle.y -= CPUMovSpeed;
-      }
+      } 
+    }
+    else if (((CPUPaddle.y + PaddleX) + CPUMovSpeed) <= (gameBoardHeight / 2))
+    {
+      CPUPaddle.y += CPUMovSpeed;
+    }
+    else if(((CPUPaddle.y + PaddleX) - CPUMovSpeed) >= (gameBoardHeight / 2))
+    {
+      CPUPaddle.y -= CPUMovSpeed;
     }
     ctx.roundRect(gameBoardWidth - PaddleX, CPUPaddle.y, 10, PaddleX, 20);
     ctx.fill();
@@ -275,7 +283,7 @@ function MouseHandler(event) {
 
   if(gameFlags.StartGame === true)
   {
-    if ((PlayerPaddle.y + movementY) >= 0 && (PlayerPaddle.y + movementY) <= (gameBoardHeight - 100))
+    if ((PlayerPaddle.y + movementY) >= 0 && (PlayerPaddle.y + movementY) <= (gameBoardHeight - PaddleX))
     {
       PlayerPaddle.y += movementY;
     }

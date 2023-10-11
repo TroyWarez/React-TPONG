@@ -5,23 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "command": "npm start",
-            "name": "Run npm start",
+            "name": "Launch Edge",
             "request": "launch",
-            "type": "node-terminal",
-            "sourceMaps": true
-        },
-        {
-            "name": "node",
-            "port": 9229,
-            "request": "attach",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "type": "node",
-            "sourceMaps": true,
-            "address": "localhost",
-            "localRoot": "${workspaceFolder}/server",
+            "type": "msedge",
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceFolder}"
         }
 
     ]
