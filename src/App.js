@@ -1,15 +1,15 @@
 import './App.css';
 import "bootstrap/dist/css/bootstrap.min.css"
-import { Alert } from 'bootstrap';
 let canvas = document.getElementById("gameBoard");
+let CursorLock = undefined;
 const canvasMarginLeft = "auto";
 const canvasMarginRight = "auto";
 const canvasStyleDisplay = "block";
 const canvasStyleWidth = "800px";
 
 const ctx = canvas.getContext("2d");
-let FPSTarget = 60;
-let gameLoop;
+let previousTimeStamp = null;
+
 const PaddleX = 100;
 let lastKey = "";
 const DefaultWidth = 800;
@@ -24,6 +24,7 @@ const DimGray = '#767676';
 const White = '#FFFFFF';
 
 const BallRad = 20;
+const BallMovSpeed = 0.1;
 
 let BackgroundColor = '#00000';
 let SpriteColor = '#767676';
@@ -37,33 +38,20 @@ canvas.style.marginRight = canvasMarginRight;
 canvas.style.display = canvasStyleDisplay;
 canvas.style.width = canvasStyleWidth;
 
-let Ball = { 'x' : 0, "y" : 0, 'radius' : BallRad }
-let PlayerPaddle = { 'x' : 0, "y" : 0 }
-let CPUPaddle = { 'x' : 0, "y" : 0 }
+let Ball = { 'x' : 0, 'y' : 0, 'radius' : BallRad, 'velocityY' : BallMovSpeed, 'velocityX' : BallMovSpeed }
+let PlayerPaddle = { 'x' : PaddleX, 'y' : 0 }
+let CPUPaddle = { 'x' : 0, 'y' : 0 }
 
 let PlayerScore = 1;
 let CPUScore = 1;
 
 let gameFlags = { "StartGame" : false, "DrawBall" : false, "Debug" : true } //booleans
 
-const MovSpeed = 6.00;
-
-
-
-let BallSpeedY = MovSpeed;
-let BallSpeedX = MovSpeed;
-
+//Debug element array
+let gameElements = [PlayerPaddle, CPUPaddle, Ball];
+let SelectedElement = {"gameElement" : null, "Index" : 0 };
 let BallSpawnDelay = 0;
 
-window.onload = function() {   
-  gameLoop = setInterval(() => {
-    Draw();
-  }, 1000 / FPSTarget)
-}
-function getMovSpeed()
-{
-  return Math.floor(Math.random() * MovSpeed) ;
-}
 function App() {
   if (gameFlags.Debug)
   {
@@ -75,18 +63,21 @@ function App() {
     CPUScore = 0;
     Ball.x = (gameBoardWidth / 2);
     Ball.y = Math.floor(Math.random() * (gameBoardHeight - 50));
+    SelectedElement = gameElements[0]; //Defaults to first element.
   }
 }
-function Draw()
+window.requestAnimationFrame(Draw);
+
+function Draw(timeStamp)
 {
+
+  const deltaTime = timeStamp - previousTimeStamp;
   ctx.canvas.width  = gameBoardWidth;
   ctx.canvas.height = gameBoardHeight;
   if (gameFlags.Debug)
   {
   //console.log("Width:" + ctx.canvas.width);
   //console.log("Height:" + ctx.canvas.height);
-  ctx.fillText(gameBoardWidth.toString(), ((gameBoardWidth - 100) / 2), 100);
-  ctx.fillText(gameBoardHeight.toString(), ((gameBoardHeight - 100) / 2), 100);
   }
   //Game Logic
   if( BallSpawnDelay < Date.now()  && BallSpawnDelay !== 0){
@@ -96,27 +87,34 @@ function Draw()
     BallSpawnDelay = 0;
   }
   if (gameFlags.DrawBall === true){
-    if ((Ball.x + 80) < 0)//CPU Scored
+    if ((Ball.x + Ball.radius) < 0)//CPU Scored
     {
       CPUScore++;
       BallSpawnDelay = Date.now() + 4000;
       gameFlags.DrawBall = false;
     }
-    else if ((Ball.x - 80) > (gameBoardWidth))//Player Scored
+    else if ((Ball.x - Ball.radius) > (gameBoardWidth))//Player Scored
     {
       PlayerScore++;
       BallSpawnDelay = Date.now() + 4000;
       gameFlags.DrawBall = false;
     }
-    else if (PlayerPaddle.x <= Ball.x)
+    else if ((PlayerPaddle.x + 10) <= (Ball.x - Ball.radius) && PlayerPaddle.y <= (Ball.y - Ball.radius))//This is wrong.
     {
-      BallSpeedY = BallSpeedY * -1;
+      //console.log("Player Paddle Hit");
+      Ball.velocityY = Ball.velocityY * -1;
+    }
+    else if (CPUPaddle.x <= Ball.x && PlayerPaddle.y <= Ball.y)
+    {
+      console.log("CPU Paddle Hit");
+      Ball.velocityY = Ball.velocityY * -1;
     }
 }
 
-
-  Ball.y += (BallSpeedY + 0.1);
-  Ball.x += (BallSpeedX + 0.1);
+//y up and down x left to right
+Ball.x += Ball.velocityX * deltaTime;
+  //Ball.y += (Ball.velocityY + 0.1);
+  //Ball.x += (Ball.velocityX + 0.001);
 
   // Background
   ctx.fillStyle = BackgroundColor;
@@ -141,7 +139,7 @@ function Draw()
   //Paddles
   if(gameFlags.StartGame === true)
   {
-    ctx.roundRect(PaddleX, PlayerPaddle.y, 10, PaddleX, 20);
+    ctx.roundRect(PlayerPaddle.x, PlayerPaddle.y, 10, PaddleX, 20);
     ctx.fill();
     ctx.stroke();
 
@@ -160,6 +158,9 @@ function Draw()
     ctx.stroke();
     }
   }
+  previousTimeStamp = timeStamp;
+
+  window.requestAnimationFrame(Draw);
 }
 
 //window.addEventListener('resize', function(event){
@@ -215,6 +216,22 @@ document.addEventListener('keydown', function(event) {
       CPUScore = 0;
       break;
     }
+    case '-':
+      {
+        if(gameFlags.Debug)
+        {
+
+        }
+        break;
+      }
+    case '=':
+        {
+          if(gameFlags.Debug)
+          {
+            
+          }
+          break;
+        }
     case 'F11':
       {
         event.preventDefault();
@@ -245,8 +262,6 @@ function MouseHandler(event) {
   event.webkitMovementY   ||
       0;
 
-  let animation = requestAnimationFrame(MouseHandler);
-
   if(gameFlags.StartGame === true)
   {
     if ((PlayerPaddle.y + movementY) >= 0 && (PlayerPaddle.y + movementY) <= (gameBoardHeight - 100))
@@ -258,10 +273,14 @@ function MouseHandler(event) {
       PlayerPaddle.y = (gameBoardHeight / 2);
     }
   }
+  window.requestAnimationFrame(MouseHandler);
 }
 
 canvas.onclick = function() {
-  canvas.requestPointerLock();
+  if(CursorLock === undefined)
+  {
+    CursorLock = canvas.requestPointerLock();
+  }
 }
 document.addEventListener("fullscreenchange", (event) => {
   if (document.fullScreen || 
@@ -296,8 +315,9 @@ document.addEventListener('pointerlockchange', function(event) {
   if(document.pointerLockElement === canvas) {
     document.addEventListener("mousemove", MouseHandler, false);
   }
-  else{
+  else if (CursorLock){
     document.removeEventListener("mousemove", MouseHandler, false);
+    CursorLock = undefined;
   }
 }, true);
 export default App;
