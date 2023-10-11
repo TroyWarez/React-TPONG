@@ -83,7 +83,7 @@ function Draw(timeStamp)
   //Game Logic
   if( BallSpawnDelay < Date.now()  && BallSpawnDelay !== 0){
     Ball.x = (gameBoardWidth / 2);
-    Ball.y = gameBoardHeight;
+    Ball.y = Math.floor(Math.random() * gameBoardHeight);
     gameFlags.DrawBall = true;
     BallSpawnDelay = 0;
   }
