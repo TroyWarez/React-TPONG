@@ -10,7 +10,9 @@ const canvasStyleWidth = "800px";
 const ctx = canvas.getContext("2d");
 let previousTimeStamp = null;
 
-const PaddleX = 100;
+const PaddleHeight = 100;
+const PaddleWidth = 10;
+const PaddleRad = 20;
 let lastKey = "";
 const DefaultWidth = 800;
 const DefaultHeight = 600;
@@ -23,9 +25,9 @@ const Black = '#00000';
 const DimGray = '#767676';
 const White = '#FFFFFF';
 
-const BallRad = 20;
-const BallMovSpeed = 0.1;
-const CPUMovSpeed = 0.5;
+const BallRad = 10;
+const BallMovSpeed = 0.35;
+const CPUMovSpeed = 0.35;
 
 let BackgroundColor = '#00000';
 let SpriteColor = '#767676';
@@ -40,7 +42,7 @@ canvas.style.display = canvasStyleDisplay;
 canvas.style.width = canvasStyleWidth;
 
 let Ball = { 'x' : 0, 'y' : 0, 'radius' : BallRad, 'velocityY' : BallMovSpeed, 'velocityX' : BallMovSpeed }
-let PlayerPaddle = { 'x' : PaddleX, 'y' : ((DefaultHeight / 2) - PaddleX) }
+let PlayerPaddle = { 'x' : PaddleHeight, 'y' : ((DefaultHeight / 2) - PaddleHeight) }
 let CPUPaddle = { 'x' : 0, 'y' : 0 }
 
 let PlayerScore = 1;
@@ -52,7 +54,6 @@ let gameFlags = { "StartGame" : false, "DrawBall" : false, "Debug" : true } //bo
 let gameElements = [PlayerPaddle, CPUPaddle, Ball];
 let SelectedElement = {"gameElement" : null, "Index" : 0 };
 let BallSpawnDelay = 0;
-
 function App() {
   if (gameFlags.Debug)
   {
@@ -63,7 +64,7 @@ function App() {
     PlayerScore = 0;
     CPUScore = 0;
     Ball.x = (gameBoardWidth / 2);
-    Ball.y = Math.floor(Math.random() * (gameBoardHeight - 50));
+    Ball.y = Math.floor(Math.random() * gameBoardHeight);
     SelectedElement = gameElements[0]; //Defaults to first element.
   }
 }
@@ -75,6 +76,8 @@ function Draw(timeStamp)
   const deltaTime = timeStamp - previousTimeStamp;
   ctx.canvas.width  = gameBoardWidth;
   ctx.canvas.height = gameBoardHeight;
+  CPUPaddle.x = (gameBoardWidth - PaddleHeight);
+
   if (gameFlags.Debug)
   {
   //console.log("Width:" + ctx.canvas.width);
@@ -100,22 +103,35 @@ function Draw(timeStamp)
       BallSpawnDelay = Date.now() + 4000;
       gameFlags.DrawBall = false;
     }
-    else if ((PlayerPaddle.x + 10) <= (Ball.x - Ball.radius) && PlayerPaddle.y <= (Ball.y - Ball.radius))//This is wrong.
+    else if ((Ball.y + Ball.radius) >= (gameBoardHeight))
     {
-      //console.log("Player Paddle Hit");
       Ball.velocityY = Ball.velocityY * -1;
+      Ball.velocityX = Ball.velocityX * 1;
     }
-    else if (CPUPaddle.x <= Ball.x && PlayerPaddle.y <= Ball.y)
+    else if ((Ball.y - Ball.radius) <= 0)
+    {
+      Ball.velocityY = Ball.velocityY * -1;
+      Ball.velocityX = Ball.velocityX * 1;
+    }
+    else if ((Ball.x + Ball.radius) >= CPUPaddle.x  && (Ball.x + Ball.radius) <= (CPUPaddle.x + PaddleWidth ) &&  (Ball.y + Ball.radius) >= (CPUPaddle.y - PaddleRad) &&  (Ball.y + Ball.radius) <= (CPUPaddle.y + PaddleHeight + PaddleRad ))
     {
       console.log("CPU Paddle Hit");
-      Ball.velocityY = Ball.velocityY * -1;
+      Ball.velocityY = Ball.velocityY * 1;
+      Ball.velocityX = Ball.velocityX * -1;
     }
-}
+    else if ((Ball.x - Ball.radius)  >= PlayerPaddle.x  && (Ball.x - Ball.radius)  <= (PlayerPaddle.x + PaddleWidth ) &&  (Ball.y + Ball.radius) >= (PlayerPaddle.y + PaddleRad) &&  (Ball.y + Ball.radius) <= (PlayerPaddle.y + PaddleHeight + PaddleRad ))
+    {
+      console.log("Player Paddle Hit");
+      Ball.velocityY = Ball.velocityY * 1;
+      Ball.velocityX = Ball.velocityX * -1;
+    }
 
-//y up and down x left to right
-Ball.x += Ball.velocityX * deltaTime;
-  //Ball.y += (Ball.velocityY + 0.1);
-  //Ball.x += (Ball.velocityX + 0.001);
+    //y up and down x left to right
+  Ball.x += Ball.velocityX * deltaTime;
+  Ball.y += (Ball.velocityY / 6) * deltaTime;
+  //Ball.x = 100;
+  //Ball.y = 354;
+}
 
   // Background
   ctx.fillStyle = BackgroundColor;
@@ -140,30 +156,34 @@ Ball.x += Ball.velocityX * deltaTime;
   //Paddles
   if(gameFlags.StartGame === true)
   {
-    ctx.roundRect(PlayerPaddle.x, PlayerPaddle.y, 10, PaddleX, 20);
+    ctx.roundRect(PlayerPaddle.x, PlayerPaddle.y, PaddleWidth, PaddleHeight, PaddleRad);
     ctx.fill();
     ctx.stroke();
 
     if (gameFlags.DrawBall === true)
     {
-      if ((CPUPaddle.y + CPUMovSpeed) <= (Ball.y - (PaddleX / 2)) && ((CPUPaddle.y + PaddleX) + CPUMovSpeed) <= gameBoardHeight )
+      if (CPUPaddle.y <= (Ball.y - (PaddleHeight / 2)) && ((CPUPaddle.y + PaddleHeight) + CPUMovSpeed) <= gameBoardHeight )
       {
-        CPUPaddle.y += CPUMovSpeed;
+        CPUPaddle.y += CPUMovSpeed * deltaTime;
       }
-      else if ((CPUPaddle.y - CPUMovSpeed) >= 0)
+      else if (CPUPaddle.y > 0)
       {
-        CPUPaddle.y -= CPUMovSpeed;
-      } 
+        CPUPaddle.y -= CPUMovSpeed * deltaTime;
+      }
+      else
+      {
+
+      }
     }
-    else if (((CPUPaddle.y + PaddleX) + CPUMovSpeed) <= (gameBoardHeight / 2))
+    else if (((CPUPaddle.y + PaddleHeight) + CPUMovSpeed) <= (gameBoardHeight / 2))
     {
-      CPUPaddle.y += CPUMovSpeed;
+      CPUPaddle.y += CPUMovSpeed * deltaTime;
     }
-    else if(((CPUPaddle.y + PaddleX) - CPUMovSpeed) >= (gameBoardHeight / 2))
+    else if(((CPUPaddle.y - PaddleHeight) - CPUMovSpeed) >= (gameBoardHeight / 2))
     {
-      CPUPaddle.y -= CPUMovSpeed;
+      CPUPaddle.y -= CPUMovSpeed * deltaTime;
     }
-    ctx.roundRect(gameBoardWidth - PaddleX, CPUPaddle.y, 10, PaddleX, 20);
+    ctx.roundRect(CPUPaddle.x, CPUPaddle.y, PaddleWidth, PaddleHeight, PaddleRad);
     ctx.fill();
     ctx.stroke();
 
@@ -283,7 +303,7 @@ function MouseHandler(event) {
 
   if(gameFlags.StartGame === true)
   {
-    if ((PlayerPaddle.y + movementY) >= 0 && (PlayerPaddle.y + movementY) <= (gameBoardHeight - PaddleX))
+    if ((PlayerPaddle.y + movementY) >= 0 && (PlayerPaddle.y + movementY) <= (gameBoardHeight - PaddleHeight))
     {
       PlayerPaddle.y += movementY;
     }
