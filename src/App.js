@@ -113,22 +113,24 @@ function Draw(timeStamp)
       Ball.velocityY = Ball.velocityY * -1;
       Ball.velocityX = Ball.velocityX * 1;
     }
-    else if ((Ball.x + Ball.radius) >= CPUPaddle.x  && (Ball.x + Ball.radius) <= (CPUPaddle.x + PaddleWidth ) &&  (Ball.y + Ball.radius) >= (CPUPaddle.y - PaddleRad) &&  (Ball.y + Ball.radius) <= (CPUPaddle.y + PaddleHeight + PaddleRad ))
+    else if ((Ball.x + Ball.radius) >= CPUPaddle.x  && (Ball.x + Ball.radius) <= (CPUPaddle.x + PaddleWidth ) &&  Ball.y >= CPUPaddle.y &&  Ball.y <= (CPUPaddle.y + PaddleHeight))
     {
       console.log("CPU Paddle Hit");
+      Ball.x = Ball.x - 1;
       Ball.velocityY = Ball.velocityY * 1;
       Ball.velocityX = Ball.velocityX * -1;
     }
-    else if ((Ball.x - Ball.radius)  >= PlayerPaddle.x  && (Ball.x - Ball.radius)  <= (PlayerPaddle.x + PaddleWidth ) &&  (Ball.y + Ball.radius) >= (PlayerPaddle.y + PaddleRad) &&  (Ball.y + Ball.radius) <= (PlayerPaddle.y + PaddleHeight + PaddleRad ))
+    else if ((Ball.x - Ball.radius)  >= PlayerPaddle.x  && (Ball.x - Ball.radius)  <= (PlayerPaddle.x + PaddleWidth ) &&  Ball.y >= PlayerPaddle.y &&  Ball.y  <= (PlayerPaddle.y + PaddleHeight))
     {
       console.log("Player Paddle Hit");
+      Ball.x = Ball.x + 1;
       Ball.velocityY = Ball.velocityY * 1;
       Ball.velocityX = Ball.velocityX * -1;
     }
 
     //y up and down x left to right
   Ball.x += Ball.velocityX * deltaTime;
-  Ball.y += (Ball.velocityY / 6) * deltaTime;
+  Ball.y += (Ball.velocityY / 8) * deltaTime;
   //Ball.x = 100;
   //Ball.y = 354;
 }
@@ -170,10 +172,14 @@ function Draw(timeStamp)
       {
         CPUPaddle.y -= CPUMovSpeed * deltaTime;
       }
-      else
+      else if (CPUPaddle.y >= gameBoardHeight)
       {
-
+        CPUPaddle.y = (gameBoardHeight - PaddleHeight);
       }
+    }
+    else if (CPUPaddle.y > gameBoardHeight)
+    {
+      CPUPaddle.y = (gameBoardHeight - PaddleHeight);
     }
     else if (((CPUPaddle.y + PaddleHeight) + CPUMovSpeed) <= (gameBoardHeight / 2))
     {
@@ -295,6 +301,10 @@ document.addEventListener('keydown', function(event) {
 }
   lastKey = event.key;
 }, true);
+function GamepadHandler(event)
+{
+  console.log("Found something");
+}
 function MouseHandler(event) {
   let movementY = event.movementY ||
   event.mozMovementY      ||
@@ -321,6 +331,9 @@ canvas.onclick = function() {
     CursorLock = canvas.requestPointerLock();
   }
 }
+window.addEventListener('gamepadconnected', GamepadHandler, false);
+window.addEventListener('gamepaddisconnected', GamepadHandler, false);
+
 document.addEventListener("fullscreenchange", (event) => {
   if (document.fullScreen || 
       document.mozFullScreen || 
