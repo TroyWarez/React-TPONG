@@ -32,8 +32,8 @@ const ColorPalettes = [{PaletteName : 'RedPalette', BackgroundColor : Red,  Spri
 let selectedPalette = ColorPalettes.find(x => x.PaletteName === 'BlackPalette');
 
 const BallRad = 10;
-const BallMovSpeed = 0.35;
-const CPUMovSpeed = 0.35;
+const BallMovSpeed = 0.45;
+const CPUMovSpeed = 0.45;
 
 const PlayerMovSpeedFull = 0.35;
 const PlayerMovSpeedHalf = 0.175;
@@ -50,7 +50,7 @@ canvas.style.marginRight = canvasMarginRight;
 canvas.style.display = canvasStyleDisplay;
 canvas.style.width = canvasStyleWidth;
 
-let Ball = { 'x' : 0, 'y' : 0, 'radius' : BallRad, 'velocityY' : BallMovSpeed, 'velocityX' : BallMovSpeed };
+let Ball = { 'x' : 0, 'y' : 0, 'radius' : BallRad, 'velocityY' : BallMovSpeed, 'velocityX' : BallMovSpeed, 'divisor' : 2};
 let PlayerPaddle = { 'x' : PaddleHeight, 'y' : ((DefaultHeight / 2) - PaddleHeight) };
 let CPUPaddle = { 'x' : 0, 'y' : 0 };
 
@@ -290,6 +290,7 @@ function Draw(timeStamp)
           strongMagnitude: 1.0,
         });
       }
+      Ball.divisor = 1;
       CPUScore++;
       BallSpawnDelay = Date.now() + 4000;
       gameFlags.DrawBall = false;
@@ -306,6 +307,7 @@ function Draw(timeStamp)
           strongMagnitude: 1.0,
         });
       }
+      Ball.divisor = 1;
       PlayerScore++;
       BallSpawnDelay = Date.now() + 4000;
       gameFlags.DrawBall = false;
@@ -314,15 +316,50 @@ function Draw(timeStamp)
     {
       Ball.velocityY = Ball.velocityY * -1;
       Ball.velocityX = Ball.velocityX * 1;
+      Ball.y = Ball.y - 1;
     }
     else if ((Ball.y - Ball.radius) <= 0)
     {
       Ball.velocityY = Ball.velocityY * -1;
       Ball.velocityX = Ball.velocityX * 1;
+      Ball.y = Ball.y + 1;
     }
     else if ((Ball.x + Ball.radius) >= CPUPaddle.x  && (Ball.x + Ball.radius) <= (CPUPaddle.x + PaddleWidth ) &&  Ball.y >= CPUPaddle.y &&  Ball.y <= (CPUPaddle.y + PaddleHeight))
     {
       console.log("CPU Paddle Hit");
+      switch(Ball.divisor)
+      {
+        case 2:
+          {
+            Ball.divisor = 4;
+            break;
+          }
+        case 4:
+          {
+            Ball.divisor = 6;
+            break;
+          }
+        case 6:
+          {
+            Ball.divisor = 8;
+            break;
+          }
+        case 8:
+          {
+            Ball.divisor = 10;
+            break;
+          }
+        case 10:
+          {
+            Ball.divisor = -10;
+            break;
+          }
+        default:
+          {
+            Ball.divisor = 2;
+            break;
+          }
+      }
       Ball.x = Ball.x - 1;
       Ball.velocityY = Ball.velocityY * 1;
       Ball.velocityX = Ball.velocityX * -1;
@@ -340,6 +377,39 @@ function Draw(timeStamp)
           strongMagnitude: 0.75,
         });
       }
+      switch(Ball.divisor)
+      {
+        case 2:
+          {
+            Ball.divisor = 4;
+            break;
+          }
+        case 4:
+          {
+            Ball.divisor = 6;
+            break;
+          }
+        case 6:
+          {
+            Ball.divisor = 8;
+            break;
+          }
+        case 8:
+          {
+            Ball.divisor = 10;
+            break;
+          }
+        case 10:
+          {
+            Ball.divisor = -10;
+            break;
+          }
+        default:
+          {
+            Ball.divisor = 2;
+            break;
+          }
+      }
       Ball.x = Ball.x + 1;
       Ball.velocityY = Ball.velocityY * 1;
       Ball.velocityX = Ball.velocityX * -1;
@@ -347,7 +417,7 @@ function Draw(timeStamp)
 
     //y up and down x left to right
   Ball.x += Ball.velocityX * deltaTime;
-  Ball.y += (Ball.velocityY / 8) * deltaTime;
+  Ball.y += (Ball.velocityY / 2) * deltaTime;
   //Ball.x = 100;
   //Ball.y = 354;
 }
