@@ -3,6 +3,7 @@ import "bootstrap/dist/css/bootstrap.min.css"
 let canvas = document.getElementById("gameBoard");
 let CursorLock = undefined;
 let ControllerSlots = new Array();
+
 const canvasMarginLeft = "auto";
 const canvasMarginRight = "auto";
 const canvasStyleDisplay = "block";
@@ -34,6 +35,9 @@ const BallRad = 10;
 const BallMovSpeed = 0.35;
 const CPUMovSpeed = 0.35;
 
+const PlayerMovSpeedFull = 0.35;
+const PlayerMovSpeedHalf = 0.175;
+const PlayerMovSpeedQuater = 0.0875;
 let BackgroundColor = '#00000';
 let SpriteColor = '#767676';
 let gameBoardWidth = DefaultWidth;
@@ -46,9 +50,9 @@ canvas.style.marginRight = canvasMarginRight;
 canvas.style.display = canvasStyleDisplay;
 canvas.style.width = canvasStyleWidth;
 
-let Ball = { 'x' : 0, 'y' : 0, 'radius' : BallRad, 'velocityY' : BallMovSpeed, 'velocityX' : BallMovSpeed }
-let PlayerPaddle = { 'x' : PaddleHeight, 'y' : ((DefaultHeight / 2) - PaddleHeight) }
-let CPUPaddle = { 'x' : 0, 'y' : 0 }
+let Ball = { 'x' : 0, 'y' : 0, 'radius' : BallRad, 'velocityY' : BallMovSpeed, 'velocityX' : BallMovSpeed };
+let PlayerPaddle = { 'x' : PaddleHeight, 'y' : ((DefaultHeight / 2) - PaddleHeight) };
+let CPUPaddle = { 'x' : 0, 'y' : 0 };
 
 let PlayerScore = 1;
 let CPUScore = 1;
@@ -62,7 +66,7 @@ let BallSpawnDelay = 0;
 
 let lastKey = "";
 let lastController = null;
-const GameboardBoundary = 5;
+const GameboardBoundary = 30;
 function App() {
   if (gameFlags.Debug)
   {
@@ -109,7 +113,41 @@ function Draw(timeStamp)
         selectedPalette = ColorPalettes[(PattleIndex + 1)];
       }
     }
-
+    else if (firstController.buttons[8].value === 1 && lastController !== null && lastController.buttons[8].value !== 1) {
+      if(document.fullScreen || 
+        document.mozFullScreen || 
+        document.webkitIsFullScreen) {
+        window.document.exitFullscreen().catch((err) => {
+            console.log(err);
+        });
+    } else {
+        window.document.documentElement.requestFullscreen().catch((err) => {
+            console.log(err);
+        });
+    }
+    }
+    else if (firstController.buttons[9].value === 1 && lastController !== null && lastController.buttons[9].value !== 1) {
+      if(gameFlags.StartGame === true)
+      {
+        gameFlags.StartGame = false;
+        gameFlags.DrawBall = false;
+        PlayerScore = 0;
+        CPUScore = 0;
+        Ball.x = 0;
+        Ball.y = 0;
+        PlayerPaddle = { 'x' : PaddleHeight, 'y' : ((gameBoardHeight / 2) - PaddleHeight) };
+        CPUPaddle = { 'x' : 0, 'y' : 0 };
+      }
+      else
+      {
+        gameFlags.StartGame = true;
+        gameFlags.DrawBall = true;
+        PlayerScore = 0;
+        CPUScore = 0;
+        Ball.x = (gameBoardWidth / 2);
+        Ball.y = Math.floor(Math.random() * gameBoardHeight);
+      }
+    }
     if (firstController.buttons[12].value === 1) {// Up
       if(gameFlags.StartGame === true)
       {
@@ -129,6 +167,91 @@ function Draw(timeStamp)
         if ((PlayerPaddle.y + (CPUMovSpeed * deltaTime)) <= ((gameBoardHeight - GameboardBoundary) - PaddleHeight))
         {
           PlayerPaddle.y += (CPUMovSpeed * deltaTime);
+        }
+        else if (PlayerPaddle.y < 0 || PlayerPaddle.y > gameBoardHeight)// Paddle out of bounds
+        {
+          PlayerPaddle.y = (gameBoardHeight / 2);
+        }
+      }
+    }
+
+    if(firstController.axes[1] <= -0.75)//Left analog
+    {
+      if(gameFlags.StartGame === true)
+      {
+        if ((PlayerPaddle.y - (PlayerMovSpeedFull * deltaTime)) >= GameboardBoundary)
+        {
+          PlayerPaddle.y -= (PlayerMovSpeedFull * deltaTime);
+        }
+        else if (PlayerPaddle.y < 0 || PlayerPaddle.y > gameBoardHeight)// Paddle out of bounds
+        {
+          PlayerPaddle.y = (gameBoardHeight / 2);
+        }
+      }
+    }
+    else if(firstController.axes[1] <= -0.5)//Left analog
+    {
+      if(gameFlags.StartGame === true)
+      {
+        if ((PlayerPaddle.y - (PlayerMovSpeedHalf * deltaTime)) >= GameboardBoundary)
+        {
+          PlayerPaddle.y -= (PlayerMovSpeedHalf * deltaTime);
+        }
+        else if (PlayerPaddle.y < 0 || PlayerPaddle.y > gameBoardHeight)// Paddle out of bounds
+        {
+          PlayerPaddle.y = (gameBoardHeight / 2);
+        }
+      }
+    }
+    else if(firstController.axes[1] <= -0.35)//Left analog
+    {
+      if(gameFlags.StartGame === true)
+      {
+        if ((PlayerPaddle.y - (PlayerMovSpeedQuater * deltaTime)) >= GameboardBoundary)
+        {
+          PlayerPaddle.y -= (PlayerMovSpeedQuater * deltaTime);
+        }
+        else if (PlayerPaddle.y < 0 || PlayerPaddle.y > gameBoardHeight)// Paddle out of bounds
+        {
+          PlayerPaddle.y = (gameBoardHeight / 2);
+        }
+      }
+    }
+    else if(firstController.axes[1] >= 0.75)//Left analog
+    {
+      if(gameFlags.StartGame === true)
+      {
+        if ((PlayerPaddle.y + (PlayerMovSpeedFull * deltaTime)) <= ((gameBoardHeight - GameboardBoundary) - PaddleHeight))
+        {
+          PlayerPaddle.y += (PlayerMovSpeedFull * deltaTime);
+        }
+        else if (PlayerPaddle.y < 0 || PlayerPaddle.y > gameBoardHeight)// Paddle out of bounds
+        {
+          PlayerPaddle.y = (gameBoardHeight / 2);
+        }
+      }
+    }
+    else if(firstController.axes[1] >= 0.5)//Left analog
+    {
+      if(gameFlags.StartGame === true)
+      {
+        if ((PlayerPaddle.y + (PlayerMovSpeedHalf * deltaTime)) <= ((gameBoardHeight - GameboardBoundary) - PaddleHeight))
+        {
+          PlayerPaddle.y += (PlayerMovSpeedHalf * deltaTime);
+        }
+        else if (PlayerPaddle.y < 0 || PlayerPaddle.y > gameBoardHeight)// Paddle out of bounds
+        {
+          PlayerPaddle.y = (gameBoardHeight / 2);
+        }
+      }
+    }
+    else if(firstController.axes[1] >= 0.35)//Left analog
+    {
+      if(gameFlags.StartGame === true)
+      {
+        if ((PlayerPaddle.y + (PlayerMovSpeedQuater * deltaTime)) <= ((gameBoardHeight - GameboardBoundary) - PaddleHeight))
+        {
+          PlayerPaddle.y += (PlayerMovSpeedQuater * deltaTime);
         }
         else if (PlayerPaddle.y < 0 || PlayerPaddle.y > gameBoardHeight)// Paddle out of bounds
         {
@@ -157,12 +280,32 @@ function Draw(timeStamp)
   if (gameFlags.DrawBall === true){
     if ((Ball.x + Ball.radius) < 0)//CPU Scored
     {
+      if( firstController !== null && typeof firstController !== 'undefined' && 'vibrationActuator' in firstController && 'connected' in firstController && firstController.connected === true)
+      {
+        firstController = Gamepads[firstController.index];
+        firstController.vibrationActuator.playEffect("dual-rumble", {
+          startDelay: 0,
+          duration: 1000,
+          weakMagnitude: 1.0,
+          strongMagnitude: 1.0,
+        });
+      }
       CPUScore++;
       BallSpawnDelay = Date.now() + 4000;
       gameFlags.DrawBall = false;
     }
     else if ((Ball.x - Ball.radius) > (gameBoardWidth))//Player Scored
     {
+      if( firstController !== null && typeof firstController !== 'undefined' && 'vibrationActuator' in firstController && 'connected' in firstController && firstController.connected === true)
+      {
+        firstController = Gamepads[firstController.index];
+        firstController.vibrationActuator.playEffect("dual-rumble", {
+          startDelay: 0,
+          duration: 1000,
+          weakMagnitude: 1.0,
+          strongMagnitude: 1.0,
+        });
+      }
       PlayerScore++;
       BallSpawnDelay = Date.now() + 4000;
       gameFlags.DrawBall = false;
@@ -187,6 +330,16 @@ function Draw(timeStamp)
     else if ((Ball.x - Ball.radius)  >= PlayerPaddle.x  && (Ball.x - Ball.radius)  <= (PlayerPaddle.x + PaddleWidth ) &&  Ball.y >= PlayerPaddle.y &&  Ball.y  <= (PlayerPaddle.y + PaddleHeight))
     {
       console.log("Player Paddle Hit");
+      if( firstController !== null && typeof firstController !== 'undefined' && 'vibrationActuator' in firstController && 'connected' in firstController && firstController.connected === true)
+      {
+        firstController = Gamepads[firstController.index];
+        firstController.vibrationActuator.playEffect("dual-rumble", {
+          startDelay: 0,
+          duration: 50,
+          weakMagnitude: 0.5,
+          strongMagnitude: 0.5,
+        });
+      }
       Ball.x = Ball.x + 1;
       Ball.velocityY = Ball.velocityY * 1;
       Ball.velocityX = Ball.velocityX * -1;
@@ -405,13 +558,15 @@ canvas.onclick = function() {
 window.addEventListener('gamepadconnected', GamepadHandler, false);
 window.addEventListener('gamepaddisconnected', GamepadHandler, false);
 
-document.addEventListener("fullscreenchange", (event) => {
+function FullScreenHandler() {
   if (document.fullScreen || 
       document.mozFullScreen || 
       document.webkitIsFullScreen) {
-        if(gameFlags.Debug){
-          console.log("Entered Full Screen");
-          }
+      if(gameFlags.Debug){
+        console.log("Entered Full Screen");
+      }
+    PlayerPaddle = { 'x' : PaddleHeight, 'y' : ((gameBoardHeight / 2) - PaddleHeight) };
+    CPUPaddle = { 'x' : 0, 'y' : 0 };
     gameBoardWidth = window.screen.width;
     gameBoardHeight = window.screen.height;
     canvas.style.paddingLeft = 0;
@@ -433,7 +588,8 @@ document.addEventListener("fullscreenchange", (event) => {
     canvas.style.display = canvasStyleDisplay;
     canvas.style.width = canvasStyleWidth;
   }
-});
+}
+document.addEventListener("fullscreenchange", FullScreenHandler);
 document.addEventListener('pointerlockchange', () => {
   if(document.pointerLockElement === canvas) {
     document.addEventListener("mousemove", MouseHandler, false);
