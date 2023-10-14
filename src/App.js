@@ -2,6 +2,7 @@ import './App.css';
 import "bootstrap/dist/css/bootstrap.min.css"
 let canvas = document.getElementById("gameBoard");
 let CursorLock = undefined;
+let ControllerSlots = new Array();
 const canvasMarginLeft = "auto";
 const canvasMarginRight = "auto";
 const canvasStyleDisplay = "block";
@@ -13,9 +14,10 @@ let previousTimeStamp = null;
 const PaddleHeight = 100;
 const PaddleWidth = 10;
 const PaddleRad = 20;
-let lastKey = "";
 const DefaultWidth = 800;
 const DefaultHeight = 600;
+
+
 const Red = '#7F0000';
 const Green = '#007F00';
 const Blue = '#00007F';
@@ -24,6 +26,9 @@ const Black = '#00000';
 
 const DimGray = '#767676';
 const White = '#FFFFFF';
+
+const ColorPalettes = [{PaletteName : 'RedPalette', BackgroundColor : Red,  SpriteColor : White}, { PaletteName : 'GreenPalette', BackgroundColor : Green,  SpriteColor : White}, { PaletteName : 'BluePalette', BackgroundColor : Blue,  SpriteColor : White }, { PaletteName : 'PurplePalette', BackgroundColor : Purple,  SpriteColor : White}, { PaletteName : 'BlackPalette', BackgroundColor : Black,  SpriteColor : DimGray }];
+let selectedPalette = ColorPalettes.find(x => x.PaletteName === 'BlackPalette');
 
 const BallRad = 10;
 const BallMovSpeed = 0.35;
@@ -54,13 +59,16 @@ let gameFlags = { "StartGame" : false, "DrawBall" : false, "Debug" : true } //bo
 let gameElements = [PlayerPaddle, CPUPaddle, Ball];
 let SelectedElement = {"gameElement" : null, "Index" : 0 };
 let BallSpawnDelay = 0;
+
+let lastKey = "";
+let lastController = null;
+const GameboardBoundary = 5;
 function App() {
   if (gameFlags.Debug)
   {
     gameFlags.StartGame = true;
     gameFlags.DrawBall = true;
-    BackgroundColor = Green;
-    SpriteColor = White;
+    selectedPalette = ColorPalettes.find(x => x.PaletteName === 'GreenPalette');
     PlayerScore = 0;
     CPUScore = 0;
     Ball.x = (gameBoardWidth / 2);
@@ -73,10 +81,66 @@ window.requestAnimationFrame(Draw);
 function Draw(timeStamp)
 {
 
+
   const deltaTime = timeStamp - previousTimeStamp;
   ctx.canvas.width  = gameBoardWidth;
   ctx.canvas.height = gameBoardHeight;
   CPUPaddle.x = (gameBoardWidth - PaddleHeight);
+  let Gamepads = navigator.getGamepads 
+    ? navigator.getGamepads() 
+    : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : [0])
+    
+  let firstController = ControllerSlots.find(x => typeof x !== 'undefined');
+  //
+  if( firstController !== null && typeof firstController !== 'undefined' && 'buttons' in firstController && 'connected' in firstController && firstController.connected === true)
+  {
+    firstController = Gamepads[firstController.index];
+    if (firstController.buttons[4].value === 1 && lastController !== null && lastController.buttons[4].value !== 1) {
+      let PattleIndex = ColorPalettes.findIndex(x => x.PaletteName === selectedPalette.PaletteName);
+      if(PattleIndex !== -1 && (PattleIndex - 1) >= 0)
+      {
+        selectedPalette = ColorPalettes[(PattleIndex - 1)];
+      }
+    }
+    else if (firstController.buttons[5].value === 1 && lastController !== null && lastController.buttons[5].value !== 1) {
+      let PattleIndex = ColorPalettes.findIndex(x => x.PaletteName === selectedPalette.PaletteName);
+      if(PattleIndex !== -1 && (PattleIndex + 1) < ColorPalettes.length)
+      {
+        selectedPalette = ColorPalettes[(PattleIndex + 1)];
+      }
+    }
+
+    if (firstController.buttons[12].value === 1) {// Up
+      if(gameFlags.StartGame === true)
+      {
+        if ((PlayerPaddle.y - (CPUMovSpeed * deltaTime)) >= GameboardBoundary)
+        {
+          PlayerPaddle.y -= (CPUMovSpeed * deltaTime);
+        }
+        else if (PlayerPaddle.y < 0 || PlayerPaddle.y > gameBoardHeight)// Paddle out of bounds
+        {
+          PlayerPaddle.y = (gameBoardHeight / 2);
+        }
+      }
+    }
+    else if (firstController.buttons[13].value === 1) {// Down
+      if(gameFlags.StartGame === true)
+      {
+        if ((PlayerPaddle.y + (CPUMovSpeed * deltaTime)) <= ((gameBoardHeight - GameboardBoundary) - PaddleHeight))
+        {
+          PlayerPaddle.y += (CPUMovSpeed * deltaTime);
+        }
+        else if (PlayerPaddle.y < 0 || PlayerPaddle.y > gameBoardHeight)// Paddle out of bounds
+        {
+          PlayerPaddle.y = (gameBoardHeight / 2);
+        }
+      }
+    }
+    lastController = firstController;
+  }
+
+  BackgroundColor = selectedPalette.BackgroundColor;
+  SpriteColor = selectedPalette.SpriteColor;
 
   if (gameFlags.Debug)
   {
@@ -164,15 +228,15 @@ function Draw(timeStamp)
 
     if (gameFlags.DrawBall === true)
     {
-      if (CPUPaddle.y <= (Ball.y - (PaddleHeight / 2)) && ((CPUPaddle.y + PaddleHeight) + CPUMovSpeed) <= gameBoardHeight )
+      if ((CPUPaddle.y + (CPUMovSpeed * deltaTime)) <= (Ball.y - (PaddleHeight / 2)) && ((CPUPaddle.y + PaddleHeight) + CPUMovSpeed) <= (gameBoardHeight - GameboardBoundary) )
       {
         CPUPaddle.y += CPUMovSpeed * deltaTime;
       }
-      else if (CPUPaddle.y > 0)
+      else if ((CPUPaddle.y - (CPUMovSpeed * deltaTime)) >= GameboardBoundary)
       {
         CPUPaddle.y -= CPUMovSpeed * deltaTime;
       }
-      else if (CPUPaddle.y >= gameBoardHeight)
+      else if ((CPUPaddle.y + (CPUMovSpeed * deltaTime)) >= gameBoardHeight)
       {
         CPUPaddle.y = (gameBoardHeight - PaddleHeight);
       }
@@ -201,21 +265,16 @@ function Draw(timeStamp)
     }
   }
   previousTimeStamp = timeStamp;
-
   window.requestAnimationFrame(Draw);
 }
 
-//window.addEventListener('resize', function(event){
-//  gameBoardWidth = window.innerHeight;
-//  gameBoardHeight = window.innerWidth;
-//});
-document.addEventListener('keyup', function(event) {
+document.addEventListener('keyup', (event)  => {
   if(event.key === lastKey)
   {
     lastKey = "";
   }
 }, true);
-document.addEventListener('keydown', function(event) {
+document.addEventListener('keydown', (event) => {
   if(gameFlags.Debug === 1)
   {
     console.log(event.key);
@@ -225,32 +284,27 @@ document.addEventListener('keydown', function(event) {
   switch(event.key) {
     case '1': //Red
     {
-        BackgroundColor = Red;
-        SpriteColor = White;
+        selectedPalette = ColorPalettes.find(x => x.PaletteName === 'RedPalette');
         break;
     }
     case '2': //Green
     {
-        BackgroundColor = Green;
-        SpriteColor = White;
+        selectedPalette = ColorPalettes.find(x => x.PaletteName === 'GreenPalette');
         break;
     }
     case '3': // Blue
     {
-        BackgroundColor = Blue;
-        SpriteColor = White;
+        selectedPalette = ColorPalettes.find(x => x.PaletteName === 'BluePalette');
         break;
     } 
     case '4': // Purple
     {
-        BackgroundColor = Purple;
-        SpriteColor = White;
+        selectedPalette = ColorPalettes.find(x => x.PaletteName === 'PurplePalette');
         break;
     }
     case '5': // Black
     {
-        BackgroundColor = Black;
-        SpriteColor = DimGray;
+        selectedPalette = ColorPalettes.find(x => x.PaletteName === 'BlackPalette');
         break;
     }
     case 'Enter':
@@ -303,7 +357,24 @@ document.addEventListener('keydown', function(event) {
 }, true);
 function GamepadHandler(event)
 {
-  console.log("Found something");
+  switch(event.type)
+  {
+    case 'gamepadconnected':
+      {
+      console.log("Gamepad connected");
+      if(event.gamepad.mapping !== '')
+      {
+        ControllerSlots[event.gamepad.index] = event.gamepad;
+      }
+      break;
+      }
+      case 'gamepaddisconnected':
+      {
+      delete ControllerSlots[event.gamepad.index];
+      console.log("Gamepad disconnected");
+      break;
+      }
+  }
 }
 function MouseHandler(event) {
   let movementY = event.movementY ||
@@ -313,7 +384,7 @@ function MouseHandler(event) {
 
   if(gameFlags.StartGame === true)
   {
-    if ((PlayerPaddle.y + movementY) >= 0 && (PlayerPaddle.y + movementY) <= (gameBoardHeight - PaddleHeight))
+    if (((PlayerPaddle.y - GameboardBoundary) + movementY) >= 0 && (PlayerPaddle.y + movementY) <= ((gameBoardHeight - GameboardBoundary) - PaddleHeight))
     {
       PlayerPaddle.y += movementY;
     }
@@ -363,7 +434,7 @@ document.addEventListener("fullscreenchange", (event) => {
     canvas.style.width = canvasStyleWidth;
   }
 });
-document.addEventListener('pointerlockchange', function(event) {
+document.addEventListener('pointerlockchange', () => {
   if(document.pointerLockElement === canvas) {
     document.addEventListener("mousemove", MouseHandler, false);
   }
