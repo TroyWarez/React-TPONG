@@ -336,8 +336,8 @@ function Draw(timeStamp)
         firstController.vibrationActuator.playEffect("dual-rumble", {
           startDelay: 0,
           duration: 50,
-          weakMagnitude: 0.5,
-          strongMagnitude: 0.5,
+          weakMagnitude: 0.75,
+          strongMagnitude: 0.75,
         });
       }
       Ball.x = Ball.x + 1;
