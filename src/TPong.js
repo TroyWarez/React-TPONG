@@ -1,13 +1,15 @@
 import './App.css';
 import "bootstrap/dist/css/bootstrap.min.css"
-import paddleHitSound from './paddleHit.m4a'
-import paddleServeSound from './paddleServe.m4a'
-import tableHitSound from './tableHit.m4a'
-import ScoreBeepSound from './score.m4a'
+import paddleHitSound from './sounds/paddleHit.m4a'
+import paddleServeSound from './sounds/paddleServe.m4a'
+import tableHitSound from './sounds/tableHit.m4a'
+import ScoreBeepSound from './sounds/score.m4a'
 let canvas = document.getElementById("gameBoard");
 let CursorLock = undefined;
 let ControllerSlots = new Array();
 
+let ScalingFactorX = 1;
+let ScalingFactorY = 1;
 const canvasMarginLeft = "auto";
 const canvasMarginRight = "auto";
 const canvasStyleDisplay = "block";
@@ -37,12 +39,12 @@ const ColorPalettes = [{PaletteName : 'RedPalette', BackgroundColor : Red,  Spri
 let selectedPalette = ColorPalettes.find(x => x.PaletteName === 'BlackPalette');
 
 const BallRad = 10;
-const BallMovSpeed = 0.45;
-const CPUMovSpeed = 0.45;
+let BallMovSpeed = 0.45;
+let CPUMovSpeed = 0.45;
 
-const PlayerMovSpeedFull = 0.35;
-const PlayerMovSpeedHalf = 0.175;
-const PlayerMovSpeedQuater = 0.0875;
+let PlayerMovSpeedFull = 0.35;
+let PlayerMovSpeedHalf = 0.175;
+let PlayerMovSpeedQuater = 0.0875;
 let BackgroundColor = '#00000';
 let SpriteColor = '#767676';
 let gameBoardWidth = DefaultWidth;
@@ -62,7 +64,7 @@ let CPUPaddle = { 'x' : 0, 'y' : 0 };
 let PlayerScore = 1;
 let CPUScore = 1;
 
-let gameFlags = { "StartGame" : false, "DrawBall" : false, "Debug" : true, "AudioPlayable" : false, } //booleans
+let gameFlags = { "StartGame" : false, "IdleMode": true, "DrawBall" : false, "Debug" : true, "AudioPlayable" : false, } //booleans
 
 //Debug element array
 let gameElements = [PlayerPaddle, CPUPaddle, Ball];
@@ -99,6 +101,15 @@ function Draw(timeStamp)
   ctx.canvas.width  = gameBoardWidth;
   ctx.canvas.height = gameBoardHeight;
   CPUPaddle.x = (gameBoardWidth - PaddleHeight);
+  ScalingFactorX = (gameBoardWidth / DefaultWidth);
+  ScalingFactorY = (gameBoardWidth / DefaultWidth);
+  BallMovSpeed = (0.45 * ScalingFactorX);
+  CPUMovSpeed = (0.45 * ScalingFactorY);
+  
+  PlayerMovSpeedFull = (0.45 * ScalingFactorY);
+  PlayerMovSpeedHalf = (0.45 * ScalingFactorY);
+  PlayerMovSpeedQuater = (0.45 * ScalingFactorY);
+
   let Gamepads = navigator.getGamepads 
     ? navigator.getGamepads() 
     : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads : [0])
@@ -363,39 +374,7 @@ function Draw(timeStamp)
           paddleHit.play();
         }
       }
-      switch(Ball.divisor)
-      {
-        case 2:
-          {
-            Ball.divisor = 4;
-            break;
-          }
-        case 4:
-          {
-            Ball.divisor = 6;
-            break;
-          }
-        case 6:
-          {
-            Ball.divisor = 8;
-            break;
-          }
-        case 8:
-          {
-            Ball.divisor = 10;
-            break;
-          }
-        case 10:
-          {
-            Ball.divisor = -10;
-            break;
-          }
-        default:
-          {
-            Ball.divisor = 2;
-            break;
-          }
-      }
+      Ball.divisor = Math.floor(Math.random() * 12);
       Ball.x = Ball.x - 1;
       Ball.velocityY = Ball.velocityY * 1;
       Ball.velocityX = Ball.velocityX * -1;
@@ -423,39 +402,7 @@ function Draw(timeStamp)
           strongMagnitude: 0.75,
         });
       }
-      switch(Ball.divisor)
-      {
-        case 2:
-          {
-            Ball.divisor = 4;
-            break;
-          }
-        case 4:
-          {
-            Ball.divisor = 6;
-            break;
-          }
-        case 6:
-          {
-            Ball.divisor = 8;
-            break;
-          }
-        case 8:
-          {
-            Ball.divisor = 10;
-            break;
-          }
-        case 10:
-          {
-            Ball.divisor = -10;
-            break;
-          }
-        default:
-          {
-            Ball.divisor = 2;
-            break;
-          }
-      }
+      Ball.divisor = Math.floor(Math.random() * 12);
       Ball.x = Ball.x + 1;
       Ball.velocityY = Ball.velocityY * 1;
       Ball.velocityX = Ball.velocityX * -1;
@@ -579,8 +526,13 @@ document.addEventListener('keydown', (event) => {
     case 'Enter':
     {
       gameFlags.StartGame = true;
+      gameFlags.DrawBall = true;
+      selectedPalette = ColorPalettes.find(x => x.PaletteName === 'GreenPalette');
       PlayerScore = 0;
       CPUScore = 0;
+      Ball.x = (gameBoardWidth / 2);
+      Ball.y = Math.floor(Math.random() * gameBoardHeight);
+      LeaderBoardTime = Date.now();
       break;
     }
     case '-':
@@ -685,6 +637,7 @@ function FullScreenHandler() {
     CPUPaddle = { 'x' : 0, 'y' : 0 };
     gameBoardWidth = window.screen.width;
     gameBoardHeight = window.screen.height;
+    Ball = { 'x' : 0, 'y' : 0, 'radius' : BallRad, 'velocityY' : BallMovSpeed, 'velocityX' : BallMovSpeed, 'divisor' : 2};
     canvas.style.paddingLeft = 0;
     canvas.style.paddingRight = 0;
     canvas.style.marginLeft = "";
@@ -697,6 +650,9 @@ function FullScreenHandler() {
     }
     gameBoardWidth = DefaultWidth;
     gameBoardHeight = DefaultHeight;
+    PlayerPaddle = { 'x' : PaddleHeight, 'y' : ((gameBoardHeight / 2) - PaddleHeight) };
+    CPUPaddle = { 'x' : 0, 'y' : 0 };
+    Ball = { 'x' : ((gameBoardWidth / 2) - PaddleHeight), 'y' : ((gameBoardHeight / 2) - PaddleHeight), 'radius' : BallRad, 'velocityY' : BallMovSpeed, 'velocityX' : BallMovSpeed, 'divisor' : 2};
     canvas.style.paddingLeft = 0;
     canvas.style.paddingRight = 0;
     canvas.style.marginLeft = canvasMarginLeft;
