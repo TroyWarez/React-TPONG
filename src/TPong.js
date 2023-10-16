@@ -1,5 +1,9 @@
 import './App.css';
 import "bootstrap/dist/css/bootstrap.min.css"
+import paddleHitSound from './paddleHit.m4a'
+import paddleServeSound from './paddleServe.m4a'
+import tableHitSound from './tableHit.m4a'
+import ScoreBeepSound from './score.m4a'
 let canvas = document.getElementById("gameBoard");
 let CursorLock = undefined;
 let ControllerSlots = new Array();
@@ -12,6 +16,7 @@ const canvasStyleWidth = "800px";
 const ctx = canvas.getContext("2d");
 let previousTimeStamp = null;
 
+let LeaderBoardTime = null;
 const PaddleHeight = 100;
 const PaddleWidth = 10;
 const PaddleRad = 20;
@@ -57,7 +62,7 @@ let CPUPaddle = { 'x' : 0, 'y' : 0 };
 let PlayerScore = 1;
 let CPUScore = 1;
 
-let gameFlags = { "StartGame" : false, "DrawBall" : false, "Debug" : true } //booleans
+let gameFlags = { "StartGame" : false, "DrawBall" : false, "Debug" : true, "AudioPlayable" : false, } //booleans
 
 //Debug element array
 let gameElements = [PlayerPaddle, CPUPaddle, Ball];
@@ -67,6 +72,11 @@ let BallSpawnDelay = 0;
 let lastKey = "";
 let lastController = null;
 const GameboardBoundary = 30;
+
+let paddleHit = new Audio(paddleHitSound);
+let paddleServe = new Audio(paddleServeSound);
+let tableHit = new Audio(tableHitSound);
+let ScoreBeep = new Audio(ScoreBeepSound);
 function App() {
   if (gameFlags.Debug)
   {
@@ -78,14 +88,13 @@ function App() {
     Ball.x = (gameBoardWidth / 2);
     Ball.y = Math.floor(Math.random() * gameBoardHeight);
     SelectedElement = gameElements[0]; //Defaults to first element.
+    LeaderBoardTime = Date.now();
   }
 }
 window.requestAnimationFrame(Draw);
 
 function Draw(timeStamp)
 {
-
-
   const deltaTime = timeStamp - previousTimeStamp;
   ctx.canvas.width  = gameBoardWidth;
   ctx.canvas.height = gameBoardHeight;
@@ -114,6 +123,8 @@ function Draw(timeStamp)
       }
     }
     else if (firstController.buttons[8].value === 1 && lastController !== null && lastController.buttons[8].value !== 1) {
+      if(gameFlags.StartGame === true)
+      {
       if(document.fullScreen || 
         document.mozFullScreen || 
         document.webkitIsFullScreen) {
@@ -125,6 +136,7 @@ function Draw(timeStamp)
             console.log(err);
         });
     }
+  }
     }
     else if (firstController.buttons[9].value === 1 && lastController !== null && lastController.buttons[9].value !== 1) {
       if(gameFlags.StartGame === true)
@@ -294,6 +306,10 @@ function Draw(timeStamp)
       CPUScore++;
       BallSpawnDelay = Date.now() + 4000;
       gameFlags.DrawBall = false;
+      if(gameFlags.AudioPlayable === true)
+      {
+        ScoreBeep.play();
+      }
     }
     else if ((Ball.x - Ball.radius) > (gameBoardWidth))//Player Scored
     {
@@ -311,22 +327,42 @@ function Draw(timeStamp)
       PlayerScore++;
       BallSpawnDelay = Date.now() + 4000;
       gameFlags.DrawBall = false;
+      if(gameFlags.AudioPlayable === true)
+      {
+        ScoreBeep.play();
+      }
     }
     else if ((Ball.y + Ball.radius) >= (gameBoardHeight))
     {
+      if(gameFlags.AudioPlayable === true){
+      tableHit.play();
+      }
       Ball.velocityY = Ball.velocityY * -1;
       Ball.velocityX = Ball.velocityX * 1;
       Ball.y = Ball.y - 1;
     }
     else if ((Ball.y - Ball.radius) <= 0)
     {
+      if(gameFlags.AudioPlayable === true){
+      tableHit.play();
+      }
       Ball.velocityY = Ball.velocityY * -1;
       Ball.velocityX = Ball.velocityX * 1;
       Ball.y = Ball.y + 1;
     }
-    else if ((Ball.x + Ball.radius) >= CPUPaddle.x  && (Ball.x + Ball.radius) <= (CPUPaddle.x + PaddleWidth ) &&  Ball.y >= CPUPaddle.y &&  Ball.y <= (CPUPaddle.y + PaddleHeight))
+    else if ((Ball.x + Ball.radius) >= CPUPaddle.x  && (Ball.x + Ball.radius) <= (CPUPaddle.x + PaddleWidth ) &&  Ball.y >= CPUPaddle.y &&  (Ball.y + Ball.radius)  <= (CPUPaddle.y + PaddleHeight))
     {
       console.log("CPU Paddle Hit");
+      if(gameFlags.AudioPlayable === true){
+        if((Math.floor(Math.random() * 2) === 0))
+        {
+          paddleServe.play();
+        }
+        else
+        {
+          paddleHit.play();
+        }
+      }
       switch(Ball.divisor)
       {
         case 2:
@@ -364,9 +400,19 @@ function Draw(timeStamp)
       Ball.velocityY = Ball.velocityY * 1;
       Ball.velocityX = Ball.velocityX * -1;
     }
-    else if ((Ball.x - Ball.radius)  >= PlayerPaddle.x  && (Ball.x - Ball.radius)  <= (PlayerPaddle.x + PaddleWidth ) &&  Ball.y >= PlayerPaddle.y &&  Ball.y  <= (PlayerPaddle.y + PaddleHeight))
+    else if ((Ball.x - Ball.radius)  >= PlayerPaddle.x  && (Ball.x - Ball.radius)  <= (PlayerPaddle.x + PaddleWidth ) &&  Ball.y >= PlayerPaddle.y &&  (Ball.y - Ball.radius)   <= (PlayerPaddle.y + PaddleHeight))
     {
       console.log("Player Paddle Hit");
+      if(gameFlags.AudioPlayable === true){
+        if((Math.floor(Math.random() * 2) === 0))
+        {
+          paddleServe.play();
+        }
+        else
+        {
+          paddleHit.play();
+        }
+      }
       if( firstController !== null && typeof firstController !== 'undefined' && 'vibrationActuator' in firstController && 'connected' in firstController && firstController.connected === true)
       {
         firstController = Gamepads[firstController.index];
@@ -659,6 +705,13 @@ function FullScreenHandler() {
     canvas.style.width = canvasStyleWidth;
   }
 }
+document.addEventListener("click", () => {
+  gameFlags.AudioPlayable = true;
+  /* the audio is now playable; play it if permissions allow */
+  if(gameFlags.Debug){
+  console.log("The audio is now playable. ");
+}
+});
 document.addEventListener("fullscreenchange", FullScreenHandler);
 document.addEventListener('pointerlockchange', () => {
   if(document.pointerLockElement === canvas) {
