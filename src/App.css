@@ -3,8 +3,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: transparent;  /* Green */
 }
-.auth-form-container {
-  display: flex;
-  flex-direction: column;
+.buttonDarkModeToggle {
+  background-color: #1f1f1f;
+  border-style: none;
+  border-radius: 180px;
+  color: white;
+  padding: 20px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+}
+.buttonDarkModeToggle:hover {
+  color: white;
+  opacity: 0.75;
 }
